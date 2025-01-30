@@ -43,8 +43,10 @@ void paint_cell(size_t x, size_t y, Color color){
 
 void draw_nav_bar(GameState game_state){
     const int board_start = calculate_nav_width() - 1;  
+    const char* score_text = TextFormat("Score:\n   %zu", game_state.score);
     DrawRectangle(0,0,board_start, WINDOW_HEIGHT*SCALING_FACTOR, BLUE);
-    DrawText("SNAKE\nGAME", board_start*0.1, WINDOW_HEIGHT*SCALING_FACTOR*0.1, SCALING_FACTOR*0.4, GREEN);
+    DrawText("SNAKE\nGAME", board_start*0.1, WINDOW_HEIGHT*SCALING_FACTOR*0.05, SCALING_FACTOR*0.4, GREEN);
+    DrawText(score_text, board_start*0.1, WINDOW_HEIGHT*SCALING_FACTOR*0.4, SCALING_FACTOR*0.4, GREEN);
     DrawRectangle(
         game_state.buttons[STOP].start.x, 
         game_state.buttons[STOP].start.y, 
@@ -78,7 +80,6 @@ void draw_grid(){
     for (size_t i = 1; i < NUM_VERTICAL_CELLS + 1 ; i++)
     {
         DrawLine(num, CELL_SIZE*i-1,WINDOW_WIDTH*SCALING_FACTOR,CELL_SIZE*i-1, RAYWHITE);
-
     }
 }
 
@@ -175,59 +176,62 @@ void input(GameState *game_state)
 }
 
 void update_game(GameState *game_state){
-    game_state->time_since_update += GetFrameTime();
-    if (game_state->time_since_update >= 1.0/game_state->game_speed)
-    {
-        game_state->time_since_update = 0.0;
-        Vector2 last_pos_ass = game_state->snake_pos[game_state->snake_length-1];
-        for (size_t i = game_state->snake_length-1; i > 0; i--)
+    
+    if (!game_state->paused){
+        game_state->time_since_update += GetFrameTime();
+        if (game_state->time_since_update >= 1.0/game_state->game_speed)
         {
-            game_state->snake_pos[i] = game_state->snake_pos[i-1];
-        }
-        
-        game_state->snake_pos[0].x += game_state->snake_dir.x;
-        game_state->snake_pos[0].y += game_state->snake_dir.y;
-        if (game_state->snake_pos[0].x < 0)
-        {
-            game_state->snake_pos[0].x = calculate_h_cells()-1;
-        }
-        if (game_state->snake_pos[0].x == calculate_h_cells())
-        {
-            game_state->snake_pos[0].x = 0;
-        }
-        if (game_state->snake_pos[0].y < 0)
-        {
-            game_state->snake_pos[0].y = NUM_VERTICAL_CELLS-1;
-        }
-        if (game_state->snake_pos[0].y == NUM_VERTICAL_CELLS)
-        {
-            game_state->snake_pos[0].y = 0;
-        }   
-        if (game_state->snake_pos[0].x == game_state->food_pos.x && game_state->snake_pos[0].y == game_state->food_pos.y)
-        {
-            game_state->score++;
-            game_state->snake_length++;
-            game_state->has_apple = false;
-            game_state->snake_pos[game_state->snake_length-1] = last_pos_ass;
-        }
-        game_state->snake_last_dir = game_state->snake_dir;
-        for (size_t i = 0; i < game_state->snake_length-1;i++){
-            for (size_t j = i+1; j < game_state->snake_length;j++){
-                if (game_state->snake_pos[i].x == game_state->snake_pos[j].x && game_state->snake_pos[i].y == game_state->snake_pos[j].y ){
-                    game_state->lost = true;
-                    game_state->current_page = ENDGAME;
+            game_state->time_since_update = 0.0;
+            Vector2 last_pos_ass = game_state->snake_pos[game_state->snake_length-1];
+            for (size_t i = game_state->snake_length-1; i > 0; i--)
+            {
+                game_state->snake_pos[i] = game_state->snake_pos[i-1];
+            }
+            
+            game_state->snake_pos[0].x += game_state->snake_dir.x;
+            game_state->snake_pos[0].y += game_state->snake_dir.y;
+            if (game_state->snake_pos[0].x < 0)
+            {
+                game_state->snake_pos[0].x = calculate_h_cells()-1;
+            }
+            if (game_state->snake_pos[0].x == calculate_h_cells())
+            {
+                game_state->snake_pos[0].x = 0;
+            }
+            if (game_state->snake_pos[0].y < 0)
+            {
+                game_state->snake_pos[0].y = NUM_VERTICAL_CELLS-1;
+            }
+            if (game_state->snake_pos[0].y == NUM_VERTICAL_CELLS)
+            {
+                game_state->snake_pos[0].y = 0;
+            }   
+            if (game_state->snake_pos[0].x == game_state->food_pos.x && game_state->snake_pos[0].y == game_state->food_pos.y)
+            {
+                game_state->score++;
+                game_state->snake_length++;
+                game_state->has_apple = false;
+                game_state->snake_pos[game_state->snake_length-1] = last_pos_ass;
+            }
+            game_state->snake_last_dir = game_state->snake_dir;
+            for (size_t i = 0; i < game_state->snake_length-1;i++){
+                for (size_t j = i+1; j < game_state->snake_length;j++){
+                    if (game_state->snake_pos[i].x == game_state->snake_pos[j].x && game_state->snake_pos[i].y == game_state->snake_pos[j].y ){
+                        game_state->lost = true;
+                        game_state->current_page = ENDGAME;
+                    }
                 }
             }
+            if (game_state->snake_length == max_cells()){
+                game_state->lost = false;
+                game_state->current_page = ENDGAME;
+            }
         }
-        if (game_state->snake_length == max_cells()){
-            game_state->lost = false;
-            game_state->current_page = ENDGAME;
+        if (!game_state->has_apple && game_state->snake_length < NUM_VERTICAL_CELLS*calculate_h_cells())
+        {
+            generate_apple(game_state);
         }
-    }
-    if (!game_state->has_apple && game_state->snake_length < NUM_VERTICAL_CELLS*calculate_h_cells())
-    {
-        generate_apple(game_state);
-    }
+    } 
 }
 void update(GameState *game_state)
 {
@@ -316,6 +320,7 @@ GameState init_game(){
     game_state.current_page = ENDGAME;
     game_state.lost = false;
     game_state.game_speed = DEFAULT_GAME_SPEED;
+    game_state.paused = false;
     const size_t button_width = WINDOW_WIDTH*SCALING_FACTOR/4;
     const size_t button_height = WINDOW_HEIGHT*SCALING_FACTOR/8;
     const size_t quit_width = button_width*0.25;
@@ -349,12 +354,12 @@ GameState init_game(){
     const size_t nav_width = calculate_nav_width();
     game_state.buttons[STOP].clicked = false;
     game_state.buttons[STOP].hovering = false;
-    game_state.buttons[STOP].start = (Vector2){nav_width*0.1, WINDOW_HEIGHT*SCALING_FACTOR*0.7};
+    game_state.buttons[STOP].start = (Vector2){nav_width*0.1, WINDOW_HEIGHT*SCALING_FACTOR*0.8};
     game_state.buttons[STOP].width = nav_width*0.8;
     game_state.buttons[STOP].height = nav_width*0.8;
     game_state.buttons[STOP].color = BLACK;
     game_state.buttons[STOP].text = " End\nGame";
-    game_state.buttons[STOP].text_pos = (Vector2){nav_width*0.2,WINDOW_HEIGHT*SCALING_FACTOR*0.7 + nav_width*0.8*0.2};
+    game_state.buttons[STOP].text_pos = (Vector2){nav_width*0.2,WINDOW_HEIGHT*SCALING_FACTOR*0.8 + nav_width*0.8*0.2};
     game_state.buttons[STOP].font_size = SCALING_FACTOR*0.4;
 
     generate_apple(&game_state);

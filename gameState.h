@@ -39,6 +39,7 @@ typedef struct _GameState {
     bool lost;
     Button buttons[4]; // 0-start, 1-quit, 2-restart, 3-stop
     float game_speed;
+    bool paused;
 } GameState;
 
 void restart_game(GameState *game_state);
