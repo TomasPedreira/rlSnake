@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gameState.h"
-#include "buttonEvents.h"
+#include "keyEvents.h"
 #include "mouseEvents.h"
 
 
@@ -13,7 +13,11 @@
 #define SCALING_FACTOR 100
 #define CELL_SIZE WINDOW_HEIGHT*SCALING_FACTOR/NUM_VERTICAL_CELLS
 #define EYE_SIZE CELL_SIZE/10
+
+
+#ifndef DEFAULT_GAME_SPEED
 #define DEFAULT_GAME_SPEED 2.5
+#endif // DEFAULT_GAME_SPEED
 
 
 
@@ -167,10 +171,10 @@ void input(GameState *game_state)
     }
     if(game_state->current_page == GAME)
     {        
-        button_events_game(game_state);
+        key_events_game(game_state);
         mouse_events_game(game_state);
     }else if (game_state->current_page == ENDGAME){
-        button_events_end(game_state);     
+        key_events_end(game_state);     
         mouse_events_end(game_state);   
     }
 }

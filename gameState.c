@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include "gameState.h"
 
+#ifndef DEFAULT_GAME_SPEED
+    #define DEFAULT_GAME_SPEED 2.5
+#endif // DEFAULT_GAME_SPEED
 
 void restart_game(GameState *game_state){
     game_state->current_page = GAME;
@@ -15,4 +18,6 @@ void restart_game(GameState *game_state){
     game_state->time_since_update = 0.0;
     game_state->lost = false;
     game_state->has_apple = false;
+    game_state->paused = false;
+    game_state->game_speed = DEFAULT_GAME_SPEED;
 }

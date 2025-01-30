@@ -2,16 +2,16 @@
 #include <raymath.h>
 #include <stdlib.h>
 #include "gameState.h"
-#include "buttonEvents.h"
+#include "keyEvents.h"
 
 
 
 
-void button_events_game(GameState *game_state){
+void key_events_game(GameState *game_state){
     if (IsKeyPressed(KEY_Q)){
         game_state->game_speed -= 0.5;
-        if (game_state->game_speed < 0.0){
-            game_state->game_speed = 0.0;
+        if (game_state->game_speed < 0.5){
+            game_state->game_speed = 0.5;
         }
     }
     if (IsKeyPressed(KEY_E)){
@@ -27,7 +27,6 @@ void button_events_game(GameState *game_state){
     if (IsKeyPressed(KEY_D) && game_state->snake_last_dir.x != -1){
         game_state->snake_dir.x = 1;
         game_state->snake_dir.y = 0;
-
     }
     if (IsKeyPressed(KEY_W) && game_state->snake_last_dir.y != 1){
         game_state->snake_dir.x = 0;
@@ -45,9 +44,9 @@ void button_events_game(GameState *game_state){
         }
     }
 }
-void button_events_end(GameState *game_state){
+void key_events_end(GameState *game_state){
     if (IsKeyPressed(KEY_Q)){
-            game_state->running = false;
+        game_state->running = false;
     }
     if (IsKeyPressed(KEY_R)){
         restart_game(game_state);
