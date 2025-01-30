@@ -2,6 +2,9 @@
 #include <raymath.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "gameState.h"
+#include "buttonEvents.h"
+#include "mouseEvents.h"
 
 
 #define WINDOW_WIDTH 16
@@ -13,43 +16,8 @@
 #define DEFAULT_GAME_SPEED 2.5
 
 
-enum current_page{
-    MAIN_MENU,
-    GAME,
-    ENDGAME
-};
-enum buttons{
-    START,
-    QUIT,
-    RESTART,
-    STOP,
-};
-typedef struct _Button{
-    Vector2 start;
-    size_t width;
-    size_t height;
-    Color color;
-    Vector2 text_pos;
-    char* text;
-    bool hovering;
-    bool clicked;
-    size_t font_size;
-}Button;
-struct GameState{
-    size_t snake_length;
-    Vector2* snake_pos;
-    Vector2 snake_dir;
-    Vector2 food_pos;
-    Vector2 snake_last_dir;
-    size_t score;
-    float time_since_update;
-    bool running;
-    bool has_apple;
-    int current_page;
-    bool lost;
-    Button buttons[4]; // 0-start, 1-quit, 2-restart, 3-stop
-    float game_speed;
-};
+
+
 
 size_t calculate_h_cells(){
     double aspect_ratio = (double)WINDOW_WIDTH / (double)WINDOW_HEIGHT;
@@ -73,7 +41,7 @@ void paint_cell(size_t x, size_t y, Color color){
     DrawRectangle(x_pos, y*CELL_SIZE+1, CELL_SIZE-2, CELL_SIZE-2, color);
 }
 
-void draw_nav_bar(struct GameState game_state){
+void draw_nav_bar(GameState game_state){
     const int board_start = calculate_nav_width() - 1;  
     DrawRectangle(0,0,board_start, WINDOW_HEIGHT*SCALING_FACTOR, BLUE);
     DrawText("SNAKE\nGAME", board_start*0.1, WINDOW_HEIGHT*SCALING_FACTOR*0.1, SCALING_FACTOR*0.4, GREEN);
@@ -150,13 +118,13 @@ void draw_snake(Vector2* snake_pos, size_t snake_length, Vector2 snake_dir){
         }
     }
 }
-void draw_apples(struct GameState *game_state)
+void draw_apples(GameState *game_state)
 {
     paint_cell(game_state->food_pos.x, game_state->food_pos.y, RED);
 }
 
 
-void generate_apple(struct GameState *game_state){
+void generate_apple(GameState *game_state){
     const size_t horizontal_cells = calculate_h_cells();
     size_t x;
     size_t y;
@@ -188,108 +156,25 @@ void generate_apple(struct GameState *game_state){
 
 }
 
-void restart_game(struct GameState *game_state){
-    game_state->current_page = GAME;
-    game_state->snake_length = 1;
-    game_state->snake_pos[0] = (Vector2){0,0};
-    game_state->snake_dir = (Vector2){1,0};
-    game_state->snake_last_dir = (Vector2){1,0};
-    game_state->score = 0;
-    game_state->time_since_update = 0.0;
-    game_state->lost = false;
-    generate_apple(game_state);
-}
 
-void input(struct GameState *game_state)
+
+void input(GameState *game_state)
 {
     if (WindowShouldClose())
     {
         game_state->running = false;
     }
-    Vector2 mouse_pos = GetMousePosition();
     if(game_state->current_page == GAME)
     {        
-        if (IsKeyPressed(KEY_Q)){
-            game_state->game_speed -= 0.5;
-            if (game_state->game_speed < 0.0){
-                game_state->game_speed = 0.0;
-            }
-        }
-        if (IsKeyPressed(KEY_E)){
-            game_state->game_speed += 0.5;
-            if (game_state->game_speed > 10.0){
-                game_state->game_speed = 10.0;
-            }
-        }
-        if (IsKeyPressed(KEY_A) && game_state->snake_last_dir.x != 1){
-            game_state->snake_dir.x = -1;
-            game_state->snake_dir.y = 0;
-        }
-        if (IsKeyPressed(KEY_D) && game_state->snake_last_dir.x != -1){
-            game_state->snake_dir.x = 1;
-            game_state->snake_dir.y = 0;
-
-        }
-        if (IsKeyPressed(KEY_W) && game_state->snake_last_dir.y != 1){
-            game_state->snake_dir.x = 0;
-            game_state->snake_dir.y = -1;
-        }
-        if (IsKeyPressed(KEY_S) && game_state->snake_last_dir.y != -1){
-            game_state->snake_dir.x = 0;
-            game_state->snake_dir.y = 1;
-        }
-        if (
-            (mouse_pos.x >= game_state->buttons[STOP].start.x) && 
-            (mouse_pos.y >= game_state->buttons[STOP].start.y) && 
-            (mouse_pos.x <= game_state->buttons[STOP].start.x+game_state->buttons[STOP].width) && 
-            (mouse_pos.y <= game_state->buttons[STOP].start.y+game_state->buttons[STOP].height)
-        ){
-            game_state->buttons[STOP].hovering = true;
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-                game_state->current_page = ENDGAME;
-                game_state->lost = true;
-            }
-        }else{
-            game_state->buttons[STOP].hovering = false;
-        }
+        button_events_game(game_state);
+        mouse_events_game(game_state);
     }else if (game_state->current_page == ENDGAME){
-        if (IsKeyPressed(KEY_Q)){
-            game_state->running = false;
-        }
-        if (IsKeyPressed(KEY_R)){
-            restart_game(game_state);
-        }        
-        if (
-            (mouse_pos.x >= game_state->buttons[QUIT].start.x) && 
-            (mouse_pos.y >= game_state->buttons[QUIT].start.y) && 
-            (mouse_pos.x <= game_state->buttons[QUIT].start.x+game_state->buttons[QUIT].width) && 
-            (mouse_pos.y <= game_state->buttons[QUIT].start.y+game_state->buttons[QUIT].height)
-        ){
-            game_state->buttons[QUIT].hovering = true;
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-                game_state->running = false;
-            }
-        }else{
-            game_state->buttons[QUIT].hovering = false;
-        }
-        if (
-            (mouse_pos.x >= game_state->buttons[RESTART].start.x) && 
-            (mouse_pos.y >= game_state->buttons[RESTART].start.y) && 
-            (mouse_pos.x <= game_state->buttons[RESTART].start.x+game_state->buttons[RESTART].width) && 
-            (mouse_pos.y <= game_state->buttons[RESTART].start.y+game_state->buttons[RESTART].height)
-            ){
-            game_state->buttons[RESTART].hovering = true;
-            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-                restart_game(game_state);
-            }
-        }else{
-            game_state->buttons[RESTART].hovering = false;
-        }
+        button_events_end(game_state);     
+        mouse_events_end(game_state);   
     }
-    
 }
 
-void update_game(struct GameState *game_state){
+void update_game(GameState *game_state){
     game_state->time_since_update += GetFrameTime();
     if (game_state->time_since_update >= 1.0/game_state->game_speed)
     {
@@ -344,7 +229,7 @@ void update_game(struct GameState *game_state){
         generate_apple(game_state);
     }
 }
-void update(struct GameState *game_state)
+void update(GameState *game_state)
 {
     if(game_state->current_page == GAME){
 
@@ -359,7 +244,7 @@ void update(struct GameState *game_state)
     } 
 }
 
-void endgame_page(struct GameState *game_state){
+void endgame_page(GameState *game_state){
 
     ClearBackground(GREEN);
     if (game_state->lost){
@@ -398,7 +283,7 @@ void endgame_page(struct GameState *game_state){
         WHITE
     );
 }
-void render(struct GameState *game_state)
+void render(GameState *game_state)
 {
     const size_t num_horizontal_cells = calculate_h_cells();
     BeginDrawing();   
@@ -415,10 +300,10 @@ void render(struct GameState *game_state)
     EndDrawing();
 }
 
-struct GameState init_game(){
+GameState init_game(){
     const size_t num_horizontal_cells = calculate_h_cells();
     
-    struct GameState game_state;
+    GameState game_state;
     game_state.snake_length = 1;
     game_state.snake_pos = (Vector2*)malloc(sizeof(Vector2)*num_horizontal_cells*NUM_VERTICAL_CELLS);
     game_state.snake_pos[0] = (Vector2){3,3};
@@ -479,7 +364,7 @@ struct GameState init_game(){
 int main(void)
 {
     InitWindow(WINDOW_WIDTH*SCALING_FACTOR, WINDOW_HEIGHT*SCALING_FACTOR, "SNAKE GAME");
-    struct GameState game_state = init_game();
+    GameState game_state = init_game();
     SetTargetFPS(60);
     SetExitKey(0);
 

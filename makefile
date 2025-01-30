@@ -7,7 +7,7 @@ LDFLAGS = -L$(RAYLIB_PATH)lib -lraylib -lopengl32 -lgdi32 -lwinmm
 
 # Target and source files
 TARGET = main
-SRC = main.c
+SRC = $(wildcard *.c)
 
 # Default rule
 all: $(TARGET)
