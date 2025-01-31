@@ -3,6 +3,7 @@
         "raylib.h": "c",
         "buttonevents.h": "c",
         "raymath.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "gamestate.h": "c"
     }
 }

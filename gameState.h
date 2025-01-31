@@ -40,8 +40,12 @@ typedef struct _GameState {
     Button buttons[4]; // 0-start, 1-quit, 2-restart, 3-stop
     float game_speed;
     bool paused;
+    Camera2D camera;
+    bool  is_animating;
 } GameState;
 
 void restart_game(GameState *game_state);
+void go_to_game_page(GameState *game_state);
+void go_to_end_page(GameState *game_state);
 
 #endif //_GAME_STATE_H_ 
